@@ -1,8 +1,3 @@
-'''
-Created on Jul 28, 2017
-
-@author: hoang
-'''
 
 """
 network.py
@@ -58,8 +53,7 @@ class Network(object):
         if test_data: n_test = len(test_data)
         n = len(training_data)
         for j in xrange(epochs):
-            #chu y: 1 epoch includes plurial mini-batches
-            #tron data 
+            # 1 epoch includes plurial mini-batches of data
             random.shuffle(training_data)
             
             #create list of mini-batches

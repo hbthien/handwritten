@@ -178,6 +178,8 @@ for i, filter_size in enumerate(filter_list):
 # combine all pooled outputs
 total_filters = num_filter * len(filter_list)
 concat = mx.sym.Concat(*pooled_outputs, dim=1)
+print("----xxxxxxx----------")
+print(concat)
 
 # reshape for next layer
 h_pool = mx.sym.Reshape(data=concat, target_shape=(batch_size, total_filters))
@@ -222,7 +224,7 @@ ctx=mx.cpu(0)
 
 arg_names = cnn.list_arguments()
 print("---------aaaaa--------")
-print(arg_names) #list all arguments we have named manually before except convulution_weight and convolution_bias: 
+print(arg_names) #list all arguments we have manually named  earlier except convulution_weight and convolution_bias: 
 #['data', 'vocab_embed_weight', 'convolution0_weight', 'convolution0_bias', 'convolution1_weight', 'convolution1_bias', 'convolution2_weight', 'convolution2_bias', 'cls_weight', 'cls_bias', 'softmax_label']
 
 
@@ -338,7 +340,7 @@ for iteration in range(epoch):
     num_total = 0
 
     # Over each batch of training data
-    for begin in range(0, x_train.shape[0], batch_size):
+    for begin in range(0, x_train.shape[0], batch_size):# batch_size= #sentences to train
         batchX = x_train[begin:begin+batch_size]
         batchY = y_train[begin:begin+batch_size]
         if batchX.shape[0] != batch_size:
