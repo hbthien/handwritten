@@ -4,7 +4,7 @@
 import mxnet as mx
 mnist = mx.test_utils.get_mnist()
 
-print(mnist)
+# print(mnist)
 
 #Here we configure the data iterator to feed examples in batches of 100. 
 #Keep in mind that each example is a 28x28 grayscale image and the corresponding label.
@@ -17,7 +17,7 @@ train_iter = mx.io.NDArrayIter(mnist['train_data'], mnist['train_label'], batch_
 val_iter = mx.io.NDArrayIter(mnist['test_data'], mnist['test_label'], batch_size)
 
 
-#1.Training with MLP
+############### 1.Training with MLP ##################################
  #we flatten our 28x28 images into a flat 1-D structure of 784 (28 * 28) raw pixel values. 
  #The order of pixel values in the flattened vector does not matter as long as 
  #we are being consistent about how we do this across all images
@@ -51,6 +51,8 @@ logging.getLogger().setLevel(logging.DEBUG)  # logging to stdout
 
 # create a trainable module on CPU
 mlp_model = mx.mod.Module(symbol=mlp, context=mx.cpu())
+print("preparing fitting.....")
+#this takes the most time of training
 mlp_model.fit(train_iter,  # train data
               eval_data=val_iter,  # validation data
               optimizer='sgd',  # use SGD to train
@@ -63,6 +65,7 @@ mlp_model.fit(train_iter,  # train data
 #computes the prediction probability scores for each test image. 
 #prob[i][j] is the probability that the i-th test image contains the j-th output class.
 test_iter = mx.io.NDArrayIter(mnist['test_data'], None, batch_size)
+print("preparing predicting.....")
 prob = mlp_model.predict(test_iter)
 assert prob.shape == (10000, 10)
 
@@ -71,7 +74,35 @@ assert prob.shape == (10000, 10)
 test_iter = mx.io.NDArrayIter(mnist['test_data'], mnist['test_label'], batch_size)
 # predict accuracy of mlp
 acc = mx.metric.Accuracy()
+print("preparing scoring the test data....")
 mlp_model.score(test_iter, acc)
 print(acc)
 assert acc.get()[1] > 0.96
+
+
+
+############ 2. Traing with CNN ##############################
+
+ # defines a CNN architecture called LeNet
+ data = mx.sym.var('data')
+# first conv layer
+conv1 = mx.sym.Convolution(data=data, kernel=(5,5), num_filter=20)
+tanh1 = mx.sym.Activation(data=conv1, act_type="tanh")
+pool1 = mx.sym.Pooling(data=tanh1, pool_type="max", kernel=(2,2), stride=(2,2))
+# second conv layer
+conv2 = mx.sym.Convolution(data=pool1, kernel=(5,5), num_filter=50)
+tanh2 = mx.sym.Activation(data=conv2, act_type="tanh")
+pool2 = mx.sym.Pooling(data=tanh2, pool_type="max", kernel=(2,2), stride=(2,2))
+# first fullc layer
+flatten = mx.sym.flatten(data=pool2)
+fc1 = mx.symbol.FullyConnected(data=flatten, num_hidden=500)
+tanh3 = mx.sym.Activation(data=fc1, act_type="tanh")
+# second fullc
+fc2 = mx.sym.FullyConnected(data=tanh3, num_hidden=10)
+# softmax loss
+lenet = mx.sym.SoftmaxOutput(data=fc2, name='softmax')
+
+
+
+
 
