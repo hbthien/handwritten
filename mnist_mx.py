@@ -18,17 +18,17 @@ val_iter = mx.io.NDArrayIter(mnist['test_data'], mnist['test_label'], batch_size
 
 
 ############### 1.Training with MLP ##################################
- #we flatten our 28x28 images into a flat 1-D structure of 784 (28 * 28) raw pixel values. 
- #The order of pixel values in the flattened vector does not matter as long as 
- #we are being consistent about how we do this across all images
+#we flatten our 28x28 images into a flat 1-D structure of 784 (28 * 28) raw pixel values. 
+#The order of pixel values in the flattened vector does not matter as long as 
+#we are being consistent about how we do this across all images
 
 data = mx.sym.var('data')
 # Flatten the data from 4-D shape into 2-D (batch_size, num_channel*width*height)
 data = mx.sym.flatten(data=data)
 
- #We declare two fully connected layers with 128 and 64 neurons each. 
- #Furthermore, these FC layers are sandwiched between ReLU activation layers 
- # each one responsible for performing an element-wise ReLU transformation on the FC layer output.
+#We declare two fully connected layers with 128 and 64 neurons each. 
+#Furthermore, these FC layers are sandwiched between ReLU activation layers 
+# each one responsible for performing an element-wise ReLU transformation on the FC layer output.
  
 # The first fully-connected layer and the corresponding activation function
 fc1  = mx.sym.FullyConnected(data=data, num_hidden=128)
@@ -82,9 +82,11 @@ assert acc.get()[1] > 0.96
 
 
 ############ 2. Traing with CNN ##############################
+print("--------- Training with CNN -----------------")
 
- # defines a CNN architecture called LeNet
- data = mx.sym.var('data')
+
+# defines a CNN architecture called LeNet
+data = mx.sym.var('data')
 # first conv layer
 conv1 = mx.sym.Convolution(data=data, kernel=(5,5), num_filter=20)
 tanh1 = mx.sym.Activation(data=conv1, act_type="tanh")
@@ -104,5 +106,27 @@ lenet = mx.sym.SoftmaxOutput(data=fc2, name='softmax')
 
 
 
+# create a trainable module on GPU 0
+lenet_model = mx.mod.Module(symbol=lenet, context=mx.cpu())
+# train with the same
+lenet_model.fit(train_iter,
+                eval_data=val_iter,
+                optimizer='sgd',
+                optimizer_params={'learning_rate':0.1},
+                eval_metric='acc',
+                batch_end_callback = mx.callback.Speedometer(batch_size, 100),
+                num_epoch=10)
+
+
+## Prediction
+
+test_iter = mx.io.NDArrayIter(mnist['test_data'], None, batch_size)
+prob = lenet_model.predict(test_iter)
+test_iter = mx.io.NDArrayIter(mnist['test_data'], mnist['test_label'], batch_size)
+# predict accuracy for lenet
+acc = mx.metric.Accuracy()
+lenet_model.score(test_iter, acc)
+print(acc)
+assert acc.get()[1] > 0.98
 
 
